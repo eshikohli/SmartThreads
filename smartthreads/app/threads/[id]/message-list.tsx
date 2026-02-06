@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CategoryTag } from "@/app/components/category-tag";
 
 const CATEGORIES = [
@@ -30,6 +30,8 @@ interface MessageListProps {
   currentUserId: string;
   onOpenReplies?: (messageId: string) => void;
   selectedMessageId?: string | null;
+  onSummarize?: (intentFilter: string) => void;
+  onFilterChange?: (filter: string) => void;
 }
 
 export function MessageList({
@@ -37,30 +39,66 @@ export function MessageList({
   currentUserId,
   onOpenReplies,
   selectedMessageId,
+  onSummarize,
+  onFilterChange,
 }: MessageListProps) {
   const [filter, setFilter] = useState<Category>("All");
+
+  // Notify parent when filter changes
+  useEffect(() => {
+    onFilterChange?.(filter);
+  }, [filter, onFilterChange]);
 
   const filteredMessages =
     filter === "All"
       ? messages
       : messages.filter((m) => m.category === filter);
 
+  const handleSummarize = () => {
+    onSummarize?.(filter);
+  };
+
   return (
     <>
-      <div className="flex gap-1 mb-3 flex-wrap">
-        {CATEGORIES.map((cat) => (
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <div className="flex gap-1 flex-wrap flex-1">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`px-2 py-1 text-xs rounded border transition-colors ${
+                filter === cat
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* Summarize button */}
+        {onSummarize && (
           <button
-            key={cat}
-            onClick={() => setFilter(cat)}
-            className={`px-2 py-1 text-xs rounded border transition-colors ${
-              filter === cat
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500"
-            }`}
+            onClick={handleSummarize}
+            className="px-3 py-1 text-xs rounded border border-purple-300 dark:border-purple-600 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors flex items-center gap-1"
           >
-            {cat}
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+              />
+            </svg>
+            Summarize
           </button>
-        ))}
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto border border-zinc-200 dark:border-zinc-700 rounded p-4 space-y-3 bg-white dark:bg-zinc-900">

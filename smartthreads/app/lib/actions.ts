@@ -5,7 +5,7 @@ import { authOptions } from "./auth";
 import { prisma } from "./db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { analyzeMessage, type AnalysisResult } from "./llm";
+import { analyzeMessage, summarizeMessages, type AnalysisResult, type SummaryResult } from "./llm";
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -417,4 +417,53 @@ export async function getThreadMembers(threadId: string) {
     email: m.user.email,
     name: m.user.name,
   }));
+}
+
+export async function getThreadSummary(
+  threadId: string,
+  intentFilter: string
+): Promise<SummaryResult> {
+  const user = await getCurrentUser();
+
+  const isMember = await verifyMembership(threadId, user.id);
+  if (!isMember) {
+    throw new Error("Access denied");
+  }
+
+  // Build query based on intent filter
+  const whereClause: { threadId: string; category?: string } = { threadId };
+  if (intentFilter !== "All") {
+    whereClause.category = intentFilter;
+  }
+
+  // Fetch most recent 30 messages matching the filter
+  const messages = await prisma.message.findMany({
+    where: whereClause,
+    orderBy: { createdAt: "desc" },
+    take: 30,
+    include: {
+      author: {
+        select: {
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+  // Reverse to get chronological order for the LLM
+  const chronologicalMessages = messages.reverse();
+
+  // Transform to the format expected by summarizeMessages
+  const summaryMessages = chronologicalMessages.map((m) => ({
+    id: m.id,
+    content: m.content,
+    category: m.category,
+    createdAt: m.createdAt.toISOString(),
+    authorName: m.author.name,
+    authorEmail: m.author.email,
+    parentMessageId: m.parentMessageId,
+  }));
+
+  return summarizeMessages(summaryMessages, intentFilter);
 }

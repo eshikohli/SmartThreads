@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { MessageList } from "./message-list";
 import { MessageForm } from "./message-form";
 import { RepliesPanel } from "./replies-panel";
+import { SummaryPanel } from "./summary-panel";
+
+type SidebarMode = "closed" | "replies" | "summary";
 
 interface Message {
   id: string;
@@ -26,17 +29,29 @@ export function ThreadContent({
   messages,
   currentUserId,
 }: ThreadContentProps) {
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(
-    null
-  );
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>("closed");
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [summaryIntentFilter, setSummaryIntentFilter] = useState<string>("All");
+  const [currentFilter, setCurrentFilter] = useState<string>("All");
 
-  const handleOpenReplies = (messageId: string) => {
+  const handleOpenReplies = useCallback((messageId: string) => {
     setSelectedMessageId(messageId);
-  };
+    setSidebarMode("replies");
+  }, []);
 
-  const handleCloseReplies = () => {
+  const handleOpenSummary = useCallback((intentFilter: string) => {
+    setSummaryIntentFilter(intentFilter);
+    setSidebarMode("summary");
+  }, []);
+
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarMode("closed");
     setSelectedMessageId(null);
-  };
+  }, []);
+
+  const handleFilterChange = useCallback((filter: string) => {
+    setCurrentFilter(filter);
+  }, []);
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -47,7 +62,9 @@ export function ThreadContent({
             messages={messages}
             currentUserId={currentUserId}
             onOpenReplies={handleOpenReplies}
-            selectedMessageId={selectedMessageId}
+            selectedMessageId={sidebarMode === "replies" ? selectedMessageId : null}
+            onSummarize={handleOpenSummary}
+            onFilterChange={handleFilterChange}
           />
         </div>
 
@@ -56,13 +73,21 @@ export function ThreadContent({
         </div>
       </div>
 
-      {/* Replies panel (right side) */}
-      {selectedMessageId && (
+      {/* Right sidebar - Replies or Summary */}
+      {sidebarMode === "replies" && selectedMessageId && (
         <RepliesPanel
           threadId={threadId}
           parentMessageId={selectedMessageId}
           currentUserId={currentUserId}
-          onClose={handleCloseReplies}
+          onClose={handleCloseSidebar}
+        />
+      )}
+
+      {sidebarMode === "summary" && (
+        <SummaryPanel
+          threadId={threadId}
+          intentFilter={summaryIntentFilter}
+          onClose={handleCloseSidebar}
         />
       )}
     </div>
