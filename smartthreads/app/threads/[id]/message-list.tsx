@@ -22,14 +22,22 @@ interface Message {
   createdAt: Date;
   authorId: string;
   author: { name: string | null; email: string };
+  _count?: { replies: number };
 }
 
 interface MessageListProps {
   messages: Message[];
   currentUserId: string;
+  onOpenReplies?: (messageId: string) => void;
+  selectedMessageId?: string | null;
 }
 
-export function MessageList({ messages, currentUserId }: MessageListProps) {
+export function MessageList({
+  messages,
+  currentUserId,
+  onOpenReplies,
+  selectedMessageId,
+}: MessageListProps) {
   const [filter, setFilter] = useState<Category>("All");
 
   const filteredMessages =
@@ -67,6 +75,8 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
         ) : (
           filteredMessages.map((message) => {
             const isMine = message.authorId === currentUserId;
+            const replyCount = message._count?.replies ?? 0;
+            const isSelected = selectedMessageId === message.id;
 
             return (
               <div
@@ -89,7 +99,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                       isMine
                         ? "bg-blue-600 text-white rounded-br-md"
                         : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-md"
-                    }`}
+                    } ${isSelected ? "ring-2 ring-blue-400" : ""}`}
                   >
                     <p className="whitespace-pre-wrap break-words">
                       {message.content}
@@ -108,6 +118,22 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                       })}
                     </span>
                     <CategoryTag category={message.category} />
+
+                    {/* Reply affordance */}
+                    {onOpenReplies && (
+                      <button
+                        onClick={() => onOpenReplies(message.id)}
+                        className={`text-xs hover:underline ${
+                          replyCount > 0
+                            ? "text-blue-600 dark:text-blue-400 font-medium"
+                            : "text-zinc-500 dark:text-zinc-400"
+                        }`}
+                      >
+                        {replyCount > 0
+                          ? `${replyCount} ${replyCount === 1 ? "reply" : "replies"}`
+                          : "Reply"}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

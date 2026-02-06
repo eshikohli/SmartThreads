@@ -101,5 +101,10 @@ model Message {
 
   author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId String
+
+  // Self-relation for reply threads
+  parentMessage   Message?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: Cascade)
+  parentMessageId String?
+  replies         Message[] @relation("MessageReplies")
 }
 

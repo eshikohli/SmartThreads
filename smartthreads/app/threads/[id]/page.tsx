@@ -3,9 +3,8 @@ import { authOptions } from "@/app/lib/auth";
 import { getThreadMessages } from "@/app/lib/actions";
 import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
-import { MessageForm } from "./message-form";
-import { MessageList } from "./message-list";
 import { MembersModal } from "./members-modal";
+import { ThreadContent } from "./thread-content";
 
 export default async function ThreadPage({
   params,
@@ -28,7 +27,9 @@ export default async function ThreadPage({
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{thread.title || "Untitled Chat"}</h1>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            {thread.title || "Untitled Chat"}
+          </h1>
           <MembersModal
             threadId={thread.id}
             memberCount={thread.members.length}
@@ -37,16 +38,11 @@ export default async function ThreadPage({
         <InviteForm threadId={thread.id} />
       </div>
 
-      <div className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
-        <MessageList
-          messages={thread.messages}
-          currentUserId={session.user.id}
-        />
-      </div>
-
-      <div className="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
-        <MessageForm threadId={thread.id} />
-      </div>
+      <ThreadContent
+        threadId={thread.id}
+        messages={thread.messages}
+        currentUserId={session.user.id}
+      />
     </div>
   );
 }

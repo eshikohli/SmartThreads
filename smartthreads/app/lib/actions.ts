@@ -137,13 +137,100 @@ export async function getThreadMessages(threadId: string) {
     include: {
       members: { include: { user: true } },
       messages: {
-        include: { author: true },
+        where: { parentMessageId: null }, // Only top-level messages
+        include: {
+          author: true,
+          _count: { select: { replies: true } },
+        },
         orderBy: { createdAt: "asc" },
       },
     },
   });
 
   return thread;
+}
+
+export async function getReplyThread(threadId: string, parentMessageId: string) {
+  const user = await getCurrentUser();
+
+  const isMember = await verifyMembership(threadId, user.id);
+  if (!isMember) {
+    throw new Error("Access denied");
+  }
+
+  // Verify the parent message belongs to this thread AND is top-level
+  const parentMessage = await prisma.message.findFirst({
+    where: {
+      id: parentMessageId,
+      threadId,
+      parentMessageId: null, // Must be top-level
+    },
+    include: {
+      author: {
+        select: { id: true, email: true, name: true },
+      },
+    },
+  });
+
+  if (!parentMessage) {
+    throw new Error("Parent message not found or is not a top-level message");
+  }
+
+  // Fetch replies
+  const replies = await prisma.message.findMany({
+    where: { parentMessageId },
+    include: {
+      author: {
+        select: { id: true, email: true, name: true },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return { parentMessage, replies };
+}
+
+export async function sendReply(
+  threadId: string,
+  parentMessageId: string,
+  content: string
+) {
+  const user = await getCurrentUser();
+
+  if (!content?.trim()) {
+    throw new Error("Content is required");
+  }
+
+  const isMember = await verifyMembership(threadId, user.id);
+  if (!isMember) {
+    throw new Error("Access denied");
+  }
+
+  // Fetch parent message for category and threadId validation
+  const parentMessage = await prisma.message.findFirst({
+    where: {
+      id: parentMessageId,
+      threadId,
+      parentMessageId: null, // Must be top-level
+    },
+  });
+
+  if (!parentMessage) {
+    throw new Error("Parent message not found or is not a top-level message");
+  }
+
+  // Create reply with inherited category
+  await prisma.message.create({
+    data: {
+      content: content.trim(),
+      category: parentMessage.category, // Inherit parent's category
+      threadId,
+      authorId: user.id,
+      parentMessageId,
+    },
+  });
+
+  revalidatePath(`/threads/${threadId}`);
 }
 
 export async function sendMessage(
