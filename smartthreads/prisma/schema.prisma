@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String         @id @default(cuid())
+  email     String         @unique
+  name      String?
+  createdAt DateTime       @default(now())
+
+  memberships ThreadMember[]
+  messages    Message[]
+  threadsMade Thread[]      @relation("ThreadsCreated")
+}
+
+model Thread {
+  id        String         @id @default(cuid())
+  title     String?
+  createdAt DateTime       @default(now())
+
+  createdBy   User?        @relation("ThreadsCreated", fields: [createdById], references: [id])
+  createdById String?
+
+  members   ThreadMember[]
+  messages  Message[]
+}
+
+model ThreadMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId String
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([threadId, userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  category  String
+  createdAt DateTime @default(now())
+
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId String
+
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+}
+
