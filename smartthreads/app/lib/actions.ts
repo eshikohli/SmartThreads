@@ -41,7 +41,13 @@ export async function listThreads() {
           content: true,
           category: true,
           createdAt: true,
-          authorId: true,
+          author: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+            },
+          },
         },
       },
       _count: {
@@ -77,6 +83,11 @@ export async function listThreads() {
               content: latestMessage.content,
               category: latestMessage.category,
               createdAt: latestMessage.createdAt,
+              author: {
+                id: latestMessage.author.id,
+                email: latestMessage.author.email,
+                name: latestMessage.author.name,
+              },
             }
           : null,
         unreadCount,
@@ -84,7 +95,10 @@ export async function listThreads() {
     })
   );
 
-  return threadsWithUnread;
+  return {
+    threads: threadsWithUnread,
+    currentUserId: user.id,
+  };
 }
 
 export async function createThread(formData: FormData) {
