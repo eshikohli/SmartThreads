@@ -193,6 +193,66 @@ export async function analyzeDraft(
   return analyzeMessage(draft, history);
 }
 
+export async function createThreadWithMembers(
+  title: string | null,
+  participantEmails: string[]
+) {
+  const user = await getCurrentUser();
+
+  // Normalize emails: trim, lowercase, dedupe, remove empty
+  const normalizedEmails = [
+    ...new Set(
+      participantEmails
+        .map((e) => e.trim().toLowerCase())
+        .filter((e) => e.length > 0 && e !== user.email?.toLowerCase())
+    ),
+  ];
+
+  // Create thread with creator as member
+  const thread = await prisma.thread.create({
+    data: {
+      title: title || null,
+      createdById: user.id,
+      members: {
+        create: { userId: user.id },
+      },
+    },
+  });
+
+  const addedEmails: string[] = [];
+  const missingEmails: string[] = [];
+
+  // Process each email
+  for (const email of normalizedEmails) {
+    const targetUser = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
+
+    if (!targetUser) {
+      missingEmails.push(email);
+      continue;
+    }
+
+    // Check if already a member (shouldn't happen for new thread, but be safe)
+    const existingMembership = await prisma.threadMember.findUnique({
+      where: { threadId_userId: { threadId: thread.id, userId: targetUser.id } },
+    });
+
+    if (!existingMembership) {
+      await prisma.threadMember.create({
+        data: { threadId: thread.id, userId: targetUser.id },
+      });
+      addedEmails.push(targetUser.email);
+    }
+  }
+
+  return {
+    threadId: thread.id,
+    addedEmails,
+    missingEmails,
+  };
+}
+
 export async function addMemberByEmail(threadId: string, email: string) {
   const user = await getCurrentUser();
 
