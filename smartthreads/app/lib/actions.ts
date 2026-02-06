@@ -288,3 +288,32 @@ export async function addMemberByEmail(threadId: string, email: string) {
   revalidatePath(`/threads/${threadId}`);
   return { success: `Added ${targetUser.email} to the chat` };
 }
+
+export async function getThreadMembers(threadId: string) {
+  const user = await getCurrentUser();
+
+  const isMember = await verifyMembership(threadId, user.id);
+  if (!isMember) {
+    throw new Error("Access denied");
+  }
+
+  const members = await prisma.threadMember.findMany({
+    where: { threadId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  return members.map((m) => ({
+    id: m.user.id,
+    email: m.user.email,
+    name: m.user.name,
+  }));
+}

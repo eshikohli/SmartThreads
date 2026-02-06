@@ -6,6 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { MessageForm } from "./message-form";
 import { MessageList } from "./message-list";
+import { MembersModal } from "./members-modal";
 
 export default async function ThreadPage({
   params,
@@ -32,9 +33,10 @@ export default async function ThreadPage({
             &larr; Back
           </Link>
           <h1 className="text-xl font-bold">{thread.title || "Untitled Chat"}</h1>
-          <span className="text-sm text-gray-500">
-            {thread.members.length} member{thread.members.length !== 1 && "s"}
-          </span>
+          <MembersModal
+            threadId={thread.id}
+            memberCount={thread.members.length}
+          />
         </div>
         <InviteForm threadId={thread.id} />
       </div>
