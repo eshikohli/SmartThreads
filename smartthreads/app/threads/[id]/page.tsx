@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/lib/auth";
 import { getThreadMessages } from "@/app/lib/actions";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { MessageForm } from "./message-form";
@@ -26,13 +25,10 @@ export default async function ThreadPage({
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 flex flex-col h-screen">
-      <div className="mb-4">
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
         <div className="flex items-center gap-4">
-          <Link href="/threads" className="text-blue-600 hover:underline">
-            &larr; Back
-          </Link>
-          <h1 className="text-xl font-bold">{thread.title || "Untitled Chat"}</h1>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{thread.title || "Untitled Chat"}</h1>
           <MembersModal
             threadId={thread.id}
             memberCount={thread.members.length}
@@ -41,14 +37,16 @@ export default async function ThreadPage({
         <InviteForm threadId={thread.id} />
       </div>
 
-      <div className="flex-1 flex flex-col mb-4 min-h-0">
+      <div className="flex-1 flex flex-col p-4 min-h-0 overflow-hidden">
         <MessageList
           messages={thread.messages}
           currentUserId={session.user.id}
         />
       </div>
 
-      <MessageForm threadId={thread.id} />
+      <div className="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+        <MessageForm threadId={thread.id} />
+      </div>
     </div>
   );
 }

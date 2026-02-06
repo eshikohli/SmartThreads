@@ -1,6 +1,7 @@
 "use client";
 
 import { analyzeDraft, sendMessage } from "@/app/lib/actions";
+import { Modal, modalButtonStyles } from "@/app/components/modal";
 import { useState } from "react";
 
 interface RepetitiveWarning {
@@ -73,51 +74,49 @@ export function MessageForm({ threadId }: { threadId: string }) {
           placeholder="Type a message..."
           required
           disabled={pending}
-          className="flex-1 border rounded px-3 py-2 disabled:opacity-50"
+          className="flex-1 border border-zinc-300 dark:border-zinc-600 rounded px-3 py-2 disabled:opacity-50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400"
         />
         <button
           type="submit"
           disabled={pending || !content.trim()}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+          className={`${modalButtonStyles.primary} disabled:opacity-50`}
         >
           {pending ? "..." : "Send"}
         </button>
       </form>
 
-      {warning && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-lg font-bold mb-2 text-amber-600">
-              Possible Duplicate
-            </h3>
-            <p className="text-gray-700 mb-4">
-              This message seems to cover something already discussed:
-            </p>
-            {warning.suggestedAnswer && (
-              <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4">
-                <p className="text-sm text-amber-800">{warning.suggestedAnswer}</p>
-              </div>
-            )}
-            <p className="text-sm text-gray-500 mb-4">
-              Category: <span className="font-medium">{warning.category}</span>
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmSend}
-                className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700"
-              >
-                Send anyway
-              </button>
-            </div>
+      <Modal
+        isOpen={!!warning}
+        onClose={handleCancel}
+        title="Possible Duplicate"
+        footer={
+          <div className="flex gap-3 justify-end">
+            <button onClick={handleCancel} className={modalButtonStyles.secondary}>
+              Cancel
+            </button>
+            <button onClick={handleConfirmSend} className={modalButtonStyles.warning}>
+              Send anyway
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <p className="text-zinc-700 dark:text-zinc-200 mb-4">
+          This message seems to cover something already discussed:
+        </p>
+        {warning?.suggestedAnswer && (
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded p-3 mb-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              {warning.suggestedAnswer}
+            </p>
+          </div>
+        )}
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Category:{" "}
+          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            {warning?.category}
+          </span>
+        </p>
+      </Modal>
     </>
   );
 }

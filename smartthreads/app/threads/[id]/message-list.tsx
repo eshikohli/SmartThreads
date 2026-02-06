@@ -47,7 +47,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
             className={`px-2 py-1 text-xs rounded border transition-colors ${
               filter === cat
                 ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                : "bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500"
             }`}
           >
             {cat}
@@ -55,13 +55,13 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto border rounded p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto border border-zinc-200 dark:border-zinc-700 rounded p-4 space-y-3 bg-white dark:bg-zinc-900">
         {messages.length === 0 ? (
-          <p className="text-gray-500 text-center">
+          <p className="text-zinc-500 dark:text-zinc-400 text-center">
             No messages yet. Start the conversation!
           </p>
         ) : filteredMessages.length === 0 ? (
-          <p className="text-gray-500 text-center">
+          <p className="text-zinc-500 dark:text-zinc-400 text-center">
             No {filter} messages in this thread.
           </p>
         ) : (
@@ -79,7 +79,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                   }`}
                 >
                   {!isMine && (
-                    <p className="text-xs text-gray-500 mb-1 px-1">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1 px-1">
                       {message.author.name || message.author.email}
                     </p>
                   )}
@@ -88,7 +88,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                     className={`rounded-2xl px-4 py-2 ${
                       isMine
                         ? "bg-blue-600 text-white rounded-br-md"
-                        : "bg-gray-100 text-gray-900 rounded-bl-md"
+                        : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-bl-md"
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words">
@@ -101,7 +101,7 @@ export function MessageList({ messages, currentUserId }: MessageListProps) {
                       isMine ? "justify-end" : "justify-start"
                     }`}
                   >
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",

@@ -1,6 +1,7 @@
 "use client";
 
 import { getThreadMembers } from "@/app/lib/actions";
+import { Modal, modalButtonStyles } from "@/app/components/modal";
 import { useEffect, useState } from "react";
 
 interface Member {
@@ -29,79 +30,63 @@ export function MembersModal({ threadId, memberCount }: MembersModalProps) {
     }
   }, [isOpen, threadId, members.length]);
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      setIsOpen(false);
-    }
-  };
-
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+        className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:underline"
       >
         {memberCount} member{memberCount !== 1 && "s"}
       </button>
 
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={handleBackdropClick}
-        >
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Participants</h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Participants"
+        footer={
+          <button
+            onClick={() => setIsOpen(false)}
+            className={`w-full ${modalButtonStyles.secondary}`}
+          >
+            Close
+          </button>
+        }
+      >
+        {loading ? (
+          <p className="text-zinc-500 dark:text-zinc-400 text-center py-4">
+            Loading...
+          </p>
+        ) : (
+          <ul className="space-y-2 max-h-64 overflow-y-auto">
+            {members.map((member) => (
+              <li
+                key={member.id}
+                className="flex items-center gap-3 p-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
-                &times;
-              </button>
-            </div>
-
-            {loading ? (
-              <p className="text-gray-500 text-center py-4">Loading...</p>
-            ) : (
-              <ul className="space-y-2 max-h-64 overflow-y-auto">
-                {members.map((member) => (
-                  <li
-                    key={member.id}
-                    className="flex items-center gap-3 p-2 rounded hover:bg-gray-50"
+                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm font-medium">
+                  {(member.name || member.email)[0].toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  {member.name && (
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                      {member.name}
+                    </p>
+                  )}
+                  <p
+                    className={`text-sm truncate ${
+                      member.name
+                        ? "text-zinc-500 dark:text-zinc-400"
+                        : "text-zinc-900 dark:text-zinc-100"
+                    }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
-                      {(member.name || member.email)[0].toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      {member.name && (
-                        <p className="font-medium text-gray-900 truncate">
-                          {member.name}
-                        </p>
-                      )}
-                      <p
-                        className={`text-sm truncate ${
-                          member.name ? "text-gray-500" : "text-gray-900"
-                        }`}
-                      >
-                        {member.email}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-4 pt-4 border-t">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-full px-4 py-2 border rounded hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                    {member.email}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
     </>
   );
 }

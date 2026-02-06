@@ -6,16 +6,16 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-950">
       <main className="max-w-xl text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
           SmartThreads
         </h1>
 
-        <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+        <p className="text-lg text-zinc-600 dark:text-zinc-300 mb-8 leading-relaxed">
           Intent-based team chat that understands your messages.
           <br />
-          <span className="text-gray-500">
+          <span className="text-zinc-500 dark:text-zinc-400">
             AI-powered categorization prevents repetitive questions
             and keeps conversations organized.
           </span>
@@ -32,7 +32,7 @@ export default async function Home() {
               </Link>
               <Link
                 href="/api/auth/signout"
-                className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="border border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-200 px-6 py-3 rounded-lg font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 Sign Out
               </Link>
@@ -48,24 +48,24 @@ export default async function Home() {
         </div>
 
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-          <div className="p-4 rounded-lg bg-white border">
+          <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
             <div className="text-2xl mb-2">🏷️</div>
-            <h3 className="font-semibold text-gray-900 mb-1">Auto-Categorize</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">Auto-Categorize</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Messages are tagged as Questions, Updates, Decisions, and more.
             </p>
           </div>
-          <div className="p-4 rounded-lg bg-white border">
+          <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
             <div className="text-2xl mb-2">🔁</div>
-            <h3 className="font-semibold text-gray-900 mb-1">Repetition Alert</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">Repetition Alert</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               Get warned before asking something already answered.
             </p>
           </div>
-          <div className="p-4 rounded-lg bg-white border">
+          <div className="p-4 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
             <div className="text-2xl mb-2">🔍</div>
-            <h3 className="font-semibold text-gray-900 mb-1">Filter by Intent</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-1">Filter by Intent</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               View only Questions, Scheduling, or Concerns at a glance.
             </p>
           </div>
