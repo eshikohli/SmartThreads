@@ -20,10 +20,16 @@ interface Message {
   content: string;
   category: string;
   createdAt: Date;
+  authorId: string;
   author: { name: string | null; email: string };
 }
 
-export function MessageList({ messages }: { messages: Message[] }) {
+interface MessageListProps {
+  messages: Message[];
+  currentUserId: string;
+}
+
+export function MessageList({ messages, currentUserId }: MessageListProps) {
   const [filter, setFilter] = useState<Category>("All");
 
   const filteredMessages =
@@ -59,20 +65,54 @@ export function MessageList({ messages }: { messages: Message[] }) {
             No {filter} messages in this thread.
           </p>
         ) : (
-          filteredMessages.map((message) => (
-            <div key={message.id} className="border-b pb-2">
-              <div className="flex items-baseline gap-2">
-                <span className="font-medium">
-                  {message.author.name || message.author.email}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(message.createdAt).toLocaleString()}
-                </span>
-                <CategoryTag category={message.category} />
+          filteredMessages.map((message) => {
+            const isMine = message.authorId === currentUserId;
+
+            return (
+              <div
+                key={message.id}
+                className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[70%] ${
+                    isMine ? "items-end" : "items-start"
+                  }`}
+                >
+                  {!isMine && (
+                    <p className="text-xs text-gray-500 mb-1 px-1">
+                      {message.author.name || message.author.email}
+                    </p>
+                  )}
+
+                  <div
+                    className={`rounded-2xl px-4 py-2 ${
+                      isMine
+                        ? "bg-blue-600 text-white rounded-br-md"
+                        : "bg-gray-100 text-gray-900 rounded-bl-md"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">
+                      {message.content}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-2 mt-1 px-1 ${
+                      isMine ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <span className="text-xs text-gray-400">
+                      {new Date(message.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <CategoryTag category={message.category} />
+                  </div>
+                </div>
               </div>
-              <p className="mt-1">{message.content}</p>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </>

@@ -1,6 +1,8 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/lib/auth";
 import { getThreadMessages } from "@/app/lib/actions";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { MessageForm } from "./message-form";
 import { MessageList } from "./message-list";
@@ -10,6 +12,11 @@ export default async function ThreadPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
   const { id } = await params;
   const thread = await getThreadMessages(id);
 
@@ -33,7 +40,10 @@ export default async function ThreadPage({
       </div>
 
       <div className="flex-1 flex flex-col mb-4 min-h-0">
-        <MessageList messages={thread.messages} />
+        <MessageList
+          messages={thread.messages}
+          currentUserId={session.user.id}
+        />
       </div>
 
       <MessageForm threadId={thread.id} />
