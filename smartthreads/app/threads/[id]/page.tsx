@@ -4,7 +4,7 @@ import { getThreadMessages } from "@/app/lib/actions";
 import { notFound, redirect } from "next/navigation";
 import { InviteForm } from "./invite-form";
 import { MembersModal } from "./members-modal";
-import { ThreadContent } from "./thread-content";
+import { RealtimeThread } from "./realtime-thread";
 
 export default async function ThreadPage({
   params,
@@ -38,9 +38,9 @@ export default async function ThreadPage({
         <InviteForm threadId={thread.id} />
       </div>
 
-      <ThreadContent
+      <RealtimeThread
         threadId={thread.id}
-        messages={thread.messages}
+        initialMessages={thread.messages}
         currentUserId={session.user.id}
       />
     </div>

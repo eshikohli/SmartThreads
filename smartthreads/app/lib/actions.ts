@@ -6,6 +6,7 @@ import { prisma } from "./db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { analyzeMessage, summarizeMessages, type AnalysisResult, type SummaryResult } from "./llm";
+import { triggerEvent } from "./pusher-server";
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -220,7 +221,7 @@ export async function sendReply(
   }
 
   // Create reply with inherited category
-  await prisma.message.create({
+  const message = await prisma.message.create({
     data: {
       content: content.trim(),
       category: parentMessage.category, // Inherit parent's category
@@ -228,6 +229,26 @@ export async function sendReply(
       authorId: user.id,
       parentMessageId,
     },
+    include: {
+      author: {
+        select: { id: true, email: true, name: true },
+      },
+    },
+  });
+
+  // Trigger realtime event
+  await triggerEvent(`thread-${threadId}`, "new-message", {
+    id: message.id,
+    content: message.content,
+    category: message.category,
+    createdAt: message.createdAt.toISOString(),
+    author: {
+      id: message.author.id,
+      email: message.author.email,
+      name: message.author.name,
+    },
+    threadId: message.threadId,
+    parentMessageId: message.parentMessageId,
   });
 
   revalidatePath(`/threads/${threadId}`);
@@ -249,13 +270,33 @@ export async function sendMessage(
     throw new Error("Access denied");
   }
 
-  await prisma.message.create({
+  const message = await prisma.message.create({
     data: {
       content: content.trim(),
       category,
       threadId,
       authorId: user.id,
     },
+    include: {
+      author: {
+        select: { id: true, email: true, name: true },
+      },
+    },
+  });
+
+  // Trigger realtime event
+  await triggerEvent(`thread-${threadId}`, "new-message", {
+    id: message.id,
+    content: message.content,
+    category: message.category,
+    createdAt: message.createdAt.toISOString(),
+    author: {
+      id: message.author.id,
+      email: message.author.email,
+      name: message.author.name,
+    },
+    threadId: message.threadId,
+    parentMessageId: null, // Top-level message
   });
 
   revalidatePath(`/threads/${threadId}`);
