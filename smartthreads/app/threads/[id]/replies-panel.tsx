@@ -3,6 +3,7 @@
 import { getReplyThread, sendReply } from "@/app/lib/actions";
 import { CategoryTag } from "@/app/components/category-tag";
 import { useEffect, useState, useCallback } from "react";
+import { subscribeToChannel, unsubscribeFromChannel } from "@/app/lib/pusher-client";
 
 interface Author {
   id: string;
@@ -22,6 +23,16 @@ interface Message {
 interface ReplyThread {
   parentMessage: Message;
   replies: Message[];
+}
+
+interface PusherMessagePayload {
+  id: string;
+  content: string;
+  category: string;
+  createdAt: string;
+  author: { id: string; email: string; name: string | null };
+  threadId: string;
+  parentMessageId: string | null;
 }
 
 interface RepliesPanelProps {
@@ -56,9 +67,62 @@ export function RepliesPanel({
     }
   }, [threadId, parentMessageId]);
 
+  // Initial fetch
   useEffect(() => {
     loadReplies();
   }, [loadReplies]);
+
+  // Subscribe to Pusher for realtime reply updates
+  useEffect(() => {
+    const channelName = `thread-${threadId}`;
+    const channel = subscribeToChannel(channelName);
+
+    if (!channel) {
+      return; // Pusher not configured
+    }
+
+    const handleNewMessage = (payload: PusherMessagePayload) => {
+      // Only handle replies to the currently open parent message
+      if (payload.parentMessageId !== parentMessageId) {
+        return;
+      }
+
+      setData((prevData) => {
+        if (!prevData) return prevData;
+
+        // Check for duplicates
+        if (prevData.replies.some((r) => r.id === payload.id)) {
+          return prevData;
+        }
+
+        // Append new reply
+        const newReply: Message = {
+          id: payload.id,
+          content: payload.content,
+          category: payload.category,
+          createdAt: new Date(payload.createdAt),
+          authorId: payload.author.id,
+          author: {
+            id: payload.author.id,
+            name: payload.author.name,
+            email: payload.author.email,
+          },
+        };
+
+        return {
+          ...prevData,
+          replies: [...prevData.replies, newReply],
+        };
+      });
+    };
+
+    channel.bind("new-message", handleNewMessage);
+
+    return () => {
+      channel.unbind("new-message", handleNewMessage);
+      // Note: Don't unsubscribe here since RealtimeThread may also be using this channel
+    };
+  }, [threadId, parentMessageId]);
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +132,7 @@ export function RepliesPanel({
     try {
       await sendReply(threadId, parentMessageId, replyContent);
       setReplyContent("");
-      await loadReplies(); // Refresh to show new reply
+      // Don't need to reload - Pusher will deliver the new reply in realtime
     } catch (err) {
       console.error("Failed to send reply:", err);
     } finally {
