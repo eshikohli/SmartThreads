@@ -223,7 +223,7 @@ SmartThreads/
 
 Private License
 
-Copyright (c) 2025 Eshi Kohli
+Copyright (c) 2026 Eshi Kohli
 All Rights Reserved.
 
 This software is proprietary and confidential.
