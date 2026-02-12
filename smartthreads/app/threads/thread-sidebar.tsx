@@ -3,6 +3,8 @@
 import { CategoryTag } from "@/app/components/category-tag";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { subscribeToChannel } from "@/app/lib/pusher-client";
 
 function formatRelativeTime(date: Date): string {
   const now = new Date();
@@ -35,13 +37,96 @@ interface Thread {
   unreadCount: number;
 }
 
+interface PusherMessagePayload {
+  id: string;
+  content: string;
+  category: string;
+  createdAt: string;
+  author: { id: string; email: string; name: string | null };
+  threadId: string;
+  parentMessageId: string | null;
+}
+
 interface ThreadSidebarProps {
   threads: Thread[];
   currentUserId: string;
 }
 
-export function ThreadSidebar({ threads, currentUserId }: ThreadSidebarProps) {
+export function ThreadSidebar({ threads: initialThreads, currentUserId }: ThreadSidebarProps) {
   const pathname = usePathname();
+  const [threads, setThreads] = useState<Thread[]>(initialThreads);
+
+  // Get the currently viewed thread ID from the pathname
+  const currentThreadId = pathname?.match(/\/threads\/([^/]+)/)?.[1] ?? null;
+
+  // Subscribe to all thread channels for realtime updates
+  useEffect(() => {
+    const handlers: Array<{ channel: ReturnType<typeof subscribeToChannel>; handler: (payload: PusherMessagePayload) => void }> = [];
+
+    threads.forEach((thread) => {
+      const channelName = `thread-${thread.id}`;
+      const channel = subscribeToChannel(channelName);
+
+      if (!channel) return;
+
+      const handleNewMessage = (payload: PusherMessagePayload) => {
+        // Only handle top-level messages for sidebar updates
+        if (payload.parentMessageId !== null) return;
+
+        setThreads((prevThreads) =>
+          prevThreads.map((t) => {
+            if (t.id !== payload.threadId) return t;
+
+            // Update latest message
+            const updatedThread: Thread = {
+              ...t,
+              latestMessage: {
+                content: payload.content,
+                category: payload.category,
+                createdAt: new Date(payload.createdAt),
+                author: {
+                  id: payload.author.id,
+                  email: payload.author.email,
+                  name: payload.author.name,
+                },
+              },
+            };
+
+            // Only increment unread if:
+            // 1. User is not currently viewing this thread
+            // 2. Message is not from the current user
+            if (currentThreadId !== payload.threadId && payload.author.id !== currentUserId) {
+              updatedThread.unreadCount = t.unreadCount + 1;
+            }
+
+            return updatedThread;
+          })
+        );
+      };
+
+      channel.bind("new-message", handleNewMessage);
+      handlers.push({ channel, handler: handleNewMessage });
+    });
+
+    return () => {
+      handlers.forEach(({ channel, handler }) => {
+        if (channel) {
+          channel.unbind("new-message", handler);
+        }
+      });
+    };
+  }, [threads.length, currentThreadId, currentUserId]);
+
+  // Reset unread count when viewing a thread
+  useEffect(() => {
+    if (currentThreadId) {
+      setThreads((prevThreads) =>
+        prevThreads.map((t) =>
+          t.id === currentThreadId ? { ...t, unreadCount: 0 } : t
+        )
+      );
+    }
+  }, [currentThreadId]);
 
   return (
     <div className="w-80 border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 flex flex-col h-full">

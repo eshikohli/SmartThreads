@@ -59,11 +59,19 @@ export function RealtimeThread({
     }
 
     const handleNewMessage = (payload: PusherMessagePayload) => {
-      // Only handle top-level messages (replies stay in replies panel)
+      // If it's a reply, increment the parent's reply count
       if (payload.parentMessageId !== null) {
+        setMessages((prevMessages) =>
+          prevMessages.map((m) =>
+            m.id === payload.parentMessageId
+              ? { ...m, _count: { replies: (m._count?.replies ?? 0) + 1 } }
+              : m
+          )
+        );
         return;
       }
 
+      // Handle top-level messages
       setMessages((prevMessages) => {
         // Check for duplicates
         if (prevMessages.some((m) => m.id === payload.id)) {
